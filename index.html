@@ -256,11 +256,33 @@
     <button class="btn-small primary" onclick="addOneTime()">+ Add one-time item</button>
   </div>
 
-  <div style="margin-top:18px; display:flex; align-items:center; gap:12px;">
+  <div style="margin-top:18px; display:flex; align-items:center; gap:12px; flex-wrap: wrap;">
     <button class="btn-small" onclick="resetScenario()">Reset scenario</button>
     <span style="font-size:12px; color: var(--text-muted);">
       Scenarios only affect projected months (not actuals).
     </span>
+  </div>
+
+  <div style="margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--border);">
+    <div style="font-size:13px; font-weight:600; margin-bottom:10px; color: var(--dark);">Save & share scenarios</div>
+    <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 10px;">
+      <select id="scenario-picker" style="min-width: 200px;" onchange="loadSavedScenario(this.value)">
+        <option value="">— Saved scenarios —</option>
+      </select>
+      <button class="btn-small primary" onclick="saveScenario()">Save current as…</button>
+      <button class="btn-small danger" onclick="deleteSavedScenario()">Delete selected</button>
+    </div>
+    <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+      <button class="btn-small" onclick="exportScenario()">↓ Export scenario (JSON)</button>
+      <button class="btn-small" onclick="document.getElementById('import-scenario').click()">↑ Import scenario</button>
+      <button class="btn-small" onclick="exportSnapshot()">↓ Export full snapshot</button>
+      <button class="btn-small" onclick="document.getElementById('import-snapshot').click()">↑ Import full snapshot</button>
+      <input type="file" id="import-scenario" accept=".json" style="display:none" onchange="importScenario(event)">
+      <input type="file" id="import-snapshot" accept=".json" style="display:none" onchange="importSnapshot(event)">
+    </div>
+    <div style="font-size:11px; color: var(--text-muted); margin-top:8px;">
+      Export a scenario to share just the assumptions. Export a full snapshot to share your entire dashboard state (actuals + scenarios + baseline).
+    </div>
   </div>
 </div>
 
@@ -326,6 +348,7 @@ const DEFAULT_STATE = {
   scenario: {
     revAdjPct: 0, expAdjPct: 0, revGrowthPct: 0, oneTime: [], showScenario: true
   },
+  savedScenarios: {},
   monthly: [
     { month:'Jan', type:'actual', revenue:48609.20, expenses:39280.64, endCash:49591.25 },
     { month:'Feb', type:'actual', revenue:34828.94, expenses:57675.04, endCash:21093.63 },
@@ -353,10 +376,126 @@ function loadState() {
       const s = JSON.parse(raw);
       if (!s.scenario) s.scenario = JSON.parse(JSON.stringify(DEFAULT_STATE.scenario));
       if (!s.scenario.oneTime) s.scenario.oneTime = [];
+      if (!s.savedScenarios) s.savedScenarios = {};
       return s;
     }
   } catch (e) { console.warn('Load failed:', e); }
   return JSON.parse(JSON.stringify(DEFAULT_STATE));
+}
+
+// ---- Save / share scenarios ----
+function saveScenario() {
+  const name = prompt('Save scenario as:', 'My Scenario ' + (Object.keys(state.savedScenarios).length + 1));
+  if (!name) return;
+  state.savedScenarios[name] = {
+    revAdjPct: state.scenario.revAdjPct,
+    expAdjPct: state.scenario.expAdjPct,
+    revGrowthPct: state.scenario.revGrowthPct,
+    oneTime: JSON.parse(JSON.stringify(state.scenario.oneTime)),
+    savedAt: new Date().toISOString()
+  };
+  saveState(); renderPicker();
+  alert('Saved "' + name + '"');
+}
+function loadSavedScenario(name) {
+  if (!name || !state.savedScenarios[name]) return;
+  const s = state.savedScenarios[name];
+  state.scenario.revAdjPct = s.revAdjPct;
+  state.scenario.expAdjPct = s.expAdjPct;
+  state.scenario.revGrowthPct = s.revGrowthPct;
+  state.scenario.oneTime = JSON.parse(JSON.stringify(s.oneTime || []));
+  saveState(); render();
+}
+function deleteSavedScenario() {
+  const picker = document.getElementById('scenario-picker');
+  const name = picker.value;
+  if (!name) { alert('Select a saved scenario first.'); return; }
+  if (!confirm('Delete "' + name + '"?')) return;
+  delete state.savedScenarios[name];
+  saveState(); renderPicker();
+}
+function renderPicker() {
+  const picker = document.getElementById('scenario-picker');
+  const current = picker.value;
+  picker.innerHTML = '<option value="">— Saved scenarios —</option>';
+  Object.keys(state.savedScenarios).sort().forEach(n => {
+    const opt = document.createElement('option');
+    opt.value = n; opt.textContent = n;
+    picker.appendChild(opt);
+  });
+  if (current && state.savedScenarios[current]) picker.value = current;
+}
+function downloadJSON(filename, obj) {
+  const blob = new Blob([JSON.stringify(obj, null, 2)], {type: 'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 100);
+}
+function exportScenario() {
+  const scenario = {
+    _type: 'ss-cashflow-scenario', _version: 1,
+    name: 'Exported Scenario',
+    revAdjPct: state.scenario.revAdjPct,
+    expAdjPct: state.scenario.expAdjPct,
+    revGrowthPct: state.scenario.revGrowthPct,
+    oneTime: state.scenario.oneTime,
+    exportedAt: new Date().toISOString()
+  };
+  downloadJSON('ss-scenario-' + Date.now() + '.json', scenario);
+}
+function exportSnapshot() {
+  const snap = {
+    _type: 'ss-cashflow-snapshot', _version: 1,
+    baseline: state.baseline,
+    scenario: state.scenario,
+    savedScenarios: state.savedScenarios,
+    monthly: state.monthly,
+    exportedAt: new Date().toISOString()
+  };
+  downloadJSON('ss-cashflow-snapshot-' + Date.now() + '.json', snap);
+}
+function importScenario(evt) {
+  const file = evt.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const d = JSON.parse(e.target.result);
+      if (d._type !== 'ss-cashflow-scenario') { alert('Not a scenario file.'); return; }
+      state.scenario.revAdjPct = d.revAdjPct ?? 0;
+      state.scenario.expAdjPct = d.expAdjPct ?? 0;
+      state.scenario.revGrowthPct = d.revGrowthPct ?? 0;
+      state.scenario.oneTime = d.oneTime || [];
+      saveState(); render();
+      alert('Scenario imported.');
+    } catch (err) { alert('Import failed: ' + err.message); }
+  };
+  reader.readAsText(file);
+  evt.target.value = '';
+}
+function importSnapshot(evt) {
+  const file = evt.target.files[0];
+  if (!file) return;
+  if (!confirm('This will REPLACE all your current data (actuals, scenario, saved scenarios). Continue?')) {
+    evt.target.value = ''; return;
+  }
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const d = JSON.parse(e.target.result);
+      if (d._type !== 'ss-cashflow-snapshot') { alert('Not a snapshot file.'); return; }
+      if (d.baseline) state.baseline = d.baseline;
+      if (d.scenario) state.scenario = d.scenario;
+      if (d.savedScenarios) state.savedScenarios = d.savedScenarios;
+      if (d.monthly) state.monthly = d.monthly;
+      saveState(); renderPicker(); render();
+      alert('Snapshot imported.');
+    } catch (err) { alert('Import failed: ' + err.message); }
+  };
+  reader.readAsText(file);
+  evt.target.value = '';
 }
 function saveState() {
   try {
@@ -678,6 +817,7 @@ function renderChart() {
 }
 
 wireInputs();
+renderPicker();
 render();
 </script>
 
