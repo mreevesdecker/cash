@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>2026 Cash Flow — System & Soul</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap">
+<style>
+  :root {
+    color-scheme: light;
+    /* S&S Primary Brand Colors */
+    --blue: #4D80F3;
+    --blue-soft: #E5EDFE;
+    --dark: #3C4258;
+    --dark-soft: #E5E7EC;
+    --pink: #EB078B;
+    --pink-soft: #FDE5F1;
+    /* Accent colors (use sparingly, only for "shifts" or when >3 colors needed) */
+    --purple: #542E7B;
+    --yellow: #E8DF76;
+    --green: #4A8762;
+    --green-soft: #E4EEE6;
+    --gold: #E4B859;
+    --gold-soft: #F7EBD1;
+    --lightblue: #3FB4E4;
+    /* Structural */
+    --bg: #F7F7F5;
+    --white: #FFFFFF;
+    --text: #3C4258;
+    --text-muted: #7B8199;
+    --border: #E4E5EA;
+    --border-focus: #4D80F3;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Poppins', 'Nunito Sans', 'Avenir Next', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+    margin: 0; padding: 24px; background: var(--bg); color: var(--text);
+    font-size: 14px; font-weight: 400; line-height: 1.5;
+  }
+  h1 {
+    margin: 0 0 4px 0; font-size: 26px; color: var(--dark);
+    font-weight: 600; letter-spacing: -0.02em;
+  }
+  .sub { color: var(--text-muted); font-size: 13px; margin-bottom: 24px; font-weight: 400; }
+  .brand {
+    display: flex; align-items: center; margin-bottom: 20px;
+    padding-bottom: 16px; border-bottom: 1px solid var(--border);
+  }
+  .brand .brand-text { line-height: 1.2; }
+  .brand .brand-name { font-size: 15px; font-weight: 600; color: var(--dark); }
+  .brand .brand-sub { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+
+  .card-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 24px; }
+  .card {
+    background: var(--white); padding: 16px 18px; border-radius: 12px;
+    border: 1px solid var(--border);
+    box-shadow: 0 1px 3px rgba(60, 66, 88, 0.06);
+  }
+  .card .label {
+    font-size: 10px; color: var(--text-muted); text-transform: uppercase;
+    letter-spacing: 1.2px; margin-bottom: 6px; font-weight: 500;
+  }
+  .card .val { font-size: 24px; font-weight: 600; color: var(--dark); letter-spacing: -0.02em; }
+  .card .val.scenario { color: var(--pink); }
+  .card .sub-val { font-size: 11px; color: var(--text-muted); margin-top: 3px; font-weight: 400; }
+
+  .section {
+    background: var(--white); padding: 20px; border-radius: 12px;
+    border: 1px solid var(--border); margin-bottom: 18px;
+    box-shadow: 0 1px 3px rgba(60, 66, 88, 0.06);
+  }
+  .section h2 {
+    margin: 0 0 14px 0; font-size: 15px; color: var(--dark);
+    font-weight: 600; letter-spacing: -0.01em;
+  }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td {
+    padding: 8px 10px; text-align: right; border-bottom: 1px solid var(--border);
+  }
+  th {
+    background: var(--dark); color: white; font-weight: 500;
+    text-align: center; font-size: 12px;
+    letter-spacing: 0.3px; text-transform: uppercase;
+  }
+  th:first-child, td:first-child { text-align: left; }
+  th:nth-child(2), td:nth-child(2) { text-align: center; }
+  th:first-child { border-top-left-radius: 6px; }
+  th:last-child { border-top-right-radius: 6px; }
+  tr.actual { background: var(--green-soft); }
+  tr.projected { background: var(--gold-soft); }
+  tr.current { border-left: 3px solid var(--green); }
+
+  input[type="number"] {
+    width: 100px; padding: 5px 8px; border: 1px solid var(--border);
+    border-radius: 6px; text-align: right; font-size: 13px; background: white;
+    font-family: 'Poppins', 'Nunito Sans', 'Avenir Next', 'Segoe UI', sans-serif; color: var(--text);
+  }
+  input[type="number"]:focus {
+    outline: none; border-color: var(--border-focus);
+    box-shadow: 0 0 0 3px rgba(77, 128, 243, 0.20);
+  }
+  select {
+    padding: 5px 8px; border: 1px solid var(--border); border-radius: 6px;
+    font-size: 12px; background: white; font-family: 'Poppins', 'Nunito Sans', 'Avenir Next', 'Segoe UI', sans-serif;
+    color: var(--text); cursor: pointer;
+  }
+  select:focus { outline: none; border-color: var(--border-focus); }
+  .net-pos { color: var(--green); font-weight: 600; }
+  .net-neg { color: var(--pink); font-weight: 600; }
+  .end-cash { font-weight: 600; color: var(--dark); }
+  .scenario-cash { font-weight: 600; color: var(--pink); }
+
+  #chart-wrap { position: relative; height: 320px; margin-top: 8px; }
+
+  .footer { display: flex; gap: 10px; margin-top: 12px; align-items: center; }
+  button {
+    padding: 7px 14px; border: 1px solid var(--border); border-radius: 8px;
+    background: white; cursor: pointer; font-size: 13px;
+    font-family: 'Poppins', 'Nunito Sans', 'Avenir Next', 'Segoe UI', sans-serif; font-weight: 500; color: var(--text);
+    transition: all 0.15s ease;
+  }
+  button:hover { background: var(--gold-soft); border-color: var(--blue); }
+  button.primary {
+    background: var(--blue); color: white; border-color: var(--blue);
+  }
+  button.primary:hover { background: var(--dark); border-color: var(--dark); }
+  button.danger { color: var(--pink); }
+  button.danger:hover { background: var(--pink-soft); border-color: var(--pink); }
+  .btn-small { padding: 4px 10px; font-size: 12px; }
+
+  .instructions {
+    background: linear-gradient(135deg, rgba(77, 128, 243, 0.06), rgba(77, 128, 243, 0.02));
+    border-left: 3px solid var(--blue); padding: 14px 18px;
+    border-radius: 8px; font-size: 13px; margin-bottom: 18px;
+  }
+  .instructions strong { color: var(--dark); font-weight: 600; }
+  .instructions ol { margin: 6px 0 0 0; padding-left: 20px; }
+  .instructions li { margin: 5px 0; color: var(--text); }
+
+  .grid-2col { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+  .grid-2col label { display: flex; flex-direction: column; font-size: 12px; color: var(--text-muted); font-weight: 500; }
+  .grid-2col label span { margin-bottom: 4px; }
+  .grid-2col input { width: 100%; }
+
+  .updated { font-size: 11px; color: var(--text-muted); text-align: right; margin-top: 4px; }
+
+  .scenario-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+  .scenario-header .toggle {
+    display: flex; align-items: center; gap: 8px; font-size: 13px;
+    color: var(--text-muted); cursor: pointer; font-weight: 400;
+  }
+  .scenario-header .toggle input { width: auto; margin: 0; accent-color: var(--blue); }
+
+  .slider-row {
+    display: grid; grid-template-columns: 200px 1fr 90px; gap: 14px; align-items: center;
+    margin-bottom: 12px;
+  }
+  .slider-row label { font-size: 13px; color: var(--text); font-weight: 500; }
+  .slider-row input[type="range"] { width: 100%; accent-color: var(--blue); }
+  .slider-row .value {
+    font-family: 'SF Mono', 'Menlo', 'Consolas', monospace; font-size: 13px; text-align: right;
+    font-weight: 600; padding: 4px 8px; border-radius: 4px;
+  }
+  .slider-row .value.pos { color: var(--green); background: var(--green-soft); }
+  .slider-row .value.neg { color: var(--pink); background: var(--pink-soft); }
+  .slider-row .value:not(.pos):not(.neg) { color: var(--text-muted); background: var(--gold-soft); }
+
+  .onetime-row {
+    display: grid; grid-template-columns: 180px 1fr 1fr 40px;
+    gap: 8px; align-items: center; margin-bottom: 6px;
+  }
+  .onetime-row select, .onetime-row input { width: 100%; }
+
+  .footer-brand {
+    margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border);
+    text-align: center; font-size: 11px; color: var(--text-muted);
+    font-weight: 400;
+  }
+</style>
+</head>
+<body>
+
+<div class="brand">
+  <div class="brand-text">
+    <div class="brand-name">System & Soul</div>
+    <div class="brand-sub">Framework · Financial Dashboard</div>
+  </div>
+</div>
+
+<h1>2026 Cash Flow</h1>
+<div class="sub">Interactive forecast with monthly actuals, projections, and scenario planning</div>
+
+<div class="card-row">
+  <div class="card">
+    <div class="label">Current Cash on Hand</div>
+    <div class="val" id="current-cash">$—</div>
+    <div class="sub-val" id="current-cash-as-of"></div>
+  </div>
+  <div class="card">
+    <div class="label">YTD Net Income</div>
+    <div class="val" id="ytd-net">$—</div>
+    <div class="sub-val" id="ytd-months"></div>
+  </div>
+  <div class="card">
+    <div class="label">Baseline Year-End Cash</div>
+    <div class="val" id="year-end">$—</div>
+    <div class="sub-val">December 31, 2026</div>
+  </div>
+  <div class="card">
+    <div class="label">Scenario Year-End Cash</div>
+    <div class="val scenario" id="year-end-scenario">$—</div>
+    <div class="sub-val" id="scenario-delta"></div>
+  </div>
+</div>
+
+<div class="instructions">
+  <strong>Monthly update workflow:</strong>
+  <ol>
+    <li>Send Claude your new bank statement and P&L for the month.</li>
+    <li>Claude will reply with the month's Revenue, Expenses, and End Cash figures.</li>
+    <li>Switch that month's <strong>Type</strong> from Projected → Actual and enter the numbers below.</li>
+    <li>Projections for later months auto-recalculate from your updated actuals.</li>
+  </ol>
+</div>
+
+<div class="section">
+  <div class="scenario-header">
+    <h2 style="margin:0;">Scenario Planning</h2>
+    <label class="toggle">
+      <input type="checkbox" id="scenario-on" checked>
+      <span>Show scenario overlay</span>
+    </label>
+  </div>
+  <div class="slider-row">
+    <label>Revenue adjustment</label>
+    <input type="range" id="rev-adj" min="-50" max="50" step="1" value="0">
+    <span class="value" id="rev-adj-val">0%</span>
+  </div>
+  <div class="slider-row">
+    <label>Expense adjustment</label>
+    <input type="range" id="exp-adj" min="-50" max="50" step="1" value="0">
+    <span class="value" id="exp-adj-val">0%</span>
+  </div>
+  <div class="slider-row">
+    <label>Monthly revenue growth</label>
+    <input type="range" id="rev-growth" min="-10" max="10" step="0.5" value="0">
+    <span class="value" id="rev-growth-val">0%/mo</span>
+  </div>
+
+  <div style="margin-top:18px;">
+    <div style="font-size:13px; font-weight:600; margin-bottom:10px; color: var(--dark);">One-time adjustments</div>
+    <div id="onetime-list"></div>
+    <button class="btn-small primary" onclick="addOneTime()">+ Add one-time item</button>
+  </div>
+
+  <div style="margin-top:18px; display:flex; align-items:center; gap:12px;">
+    <button class="btn-small" onclick="resetScenario()">Reset scenario</button>
+    <span style="font-size:12px; color: var(--text-muted);">
+      Scenarios only affect projected months (not actuals).
+    </span>
+  </div>
+</div>
+
+<div class="section">
+  <h2>Monthly Cash Flow</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Month</th>
+        <th>Type</th>
+        <th>Revenue</th>
+        <th>Expenses</th>
+        <th>Net</th>
+        <th>End Cash (Baseline)</th>
+        <th class="scenario-col">End Cash (Scenario)</th>
+      </tr>
+    </thead>
+    <tbody id="monthly-body"></tbody>
+  </table>
+  <div class="footer">
+    <button class="danger" onclick="resetData()">Reset all data</button>
+    <div class="updated" id="last-updated" style="flex:1;"></div>
+  </div>
+</div>
+
+<div class="section">
+  <h2>Cash Balance Trajectory</h2>
+  <div id="chart-wrap"><canvas id="chart"></canvas></div>
+</div>
+
+<div class="section">
+  <h2>Baseline Assumptions</h2>
+  <div class="grid-2col">
+    <label><span>Monthly Revenue Baseline</span><input type="number" id="base-rev" step="1"></label>
+    <label><span>Monthly Expenses Baseline</span><input type="number" id="base-exp" step="1"></label>
+    <label><span>Baseline CT+Cred avg (embedded)</span><input type="number" id="ct-baseline" step="1"></label>
+    <label><span>Aug Coach Training Rev</span><input type="number" id="ct-aug" step="1"></label>
+    <label><span>Sep Coach Training Rev</span><input type="number" id="ct-sep" step="1"></label>
+    <label><span>Oct Coach Training Rev</span><input type="number" id="ct-oct" step="1"></label>
+    <label><span>Nov Coach Training Rev</span><input type="number" id="ct-nov" step="1"></label>
+    <label><span>Dec Coach Training Rev</span><input type="number" id="ct-dec" step="1"></label>
+  </div>
+  <div style="font-size:11px; color: var(--text-muted); margin-top:10px;">
+    Projected months: Revenue = Rev Baseline − Baseline CT+Cred avg + Month's Coach Training Rev.
+    Expenses use the Monthly Expenses Baseline.
+  </div>
+</div>
+
+<div class="footer-brand">
+  System & Soul Framework, LLC · Financial Dashboard · Data as of end of July 2026
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js" integrity="sha384-iU8HYtnGQ8Cy4zl7gbNMOhsDTTKX02BTXptVP/vqAWIaTfM7isw76iyZCsjL2eVi" crossorigin="anonymous"></script>
+<script>
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const STORAGE_KEY = 'cashflow-2026-v2';
+
+const DEFAULT_STATE = {
+  baseline: {
+    revenue: 45057, expenses: 43477, coachTrainingBaseline: 7515,
+    coachTrainingByMonth: { Aug: 6080, Sep: 8080, Oct: 4580, Nov: 7515, Dec: 7515 }
+  },
+  scenario: {
+    revAdjPct: 0, expAdjPct: 0, revGrowthPct: 0, oneTime: [], showScenario: true
+  },
+  monthly: [
+    { month:'Jan', type:'actual', revenue:48609.20, expenses:39280.64, endCash:49591.25 },
+    { month:'Feb', type:'actual', revenue:34828.94, expenses:57675.04, endCash:21093.63 },
+    { month:'Mar', type:'actual', revenue:41732.68, expenses:54122.05, endCash:10531.38 },
+    { month:'Apr', type:'actual', revenue:52653.97, expenses:41626.12, endCash:19772.04 },
+    { month:'May', type:'actual', revenue:39959.56, expenses:35645.05, endCash:24614.54 },
+    { month:'Jun', type:'actual', revenue:45363.72, expenses:36240.02, endCash:31766.98 },
+    { month:'Jul', type:'actual', revenue:52251.04, expenses:39745.84, endCash:45429.38 },
+    { month:'Aug', type:'projected', revenue:null, expenses:null, endCash:null },
+    { month:'Sep', type:'projected', revenue:null, expenses:null, endCash:null },
+    { month:'Oct', type:'projected', revenue:null, expenses:null, endCash:null },
+    { month:'Nov', type:'projected', revenue:null, expenses:null, endCash:null },
+    { month:'Dec', type:'projected', revenue:null, expenses:null, endCash:null },
+  ]
+};
+
+let state = loadState();
+let chart = null;
+let scenarioEndCash = new Array(12).fill(null);
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const s = JSON.parse(raw);
+      if (!s.scenario) s.scenario = JSON.parse(JSON.stringify(DEFAULT_STATE.scenario));
+      if (!s.scenario.oneTime) s.scenario.oneTime = [];
+      return s;
+    }
+  } catch (e) { console.warn('Load failed:', e); }
+  return JSON.parse(JSON.stringify(DEFAULT_STATE));
+}
+function saveState() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    document.getElementById('last-updated').textContent = 'Saved ' + new Date().toLocaleString();
+  } catch (e) {}
+}
+function resetData() {
+  if (!confirm('Reset ALL data (actuals + scenario + baseline) to defaults?')) return;
+  state = JSON.parse(JSON.stringify(DEFAULT_STATE));
+  saveState(); render();
+}
+function resetScenario() {
+  state.scenario = JSON.parse(JSON.stringify(DEFAULT_STATE.scenario));
+  saveState(); render();
+}
+function fmt(v) {
+  if (v === null || v === undefined || isNaN(v)) return '—';
+  return '$' + Math.round(v).toLocaleString();
+}
+function fmtDelta(v) {
+  if (v === null || v === undefined || isNaN(v)) return '';
+  return (v >= 0 ? '+' : '') + fmt(v);
+}
+
+function computeBaseline() {
+  const b = state.baseline;
+  let prevEnd = null;
+  state.monthly.forEach(m => {
+    if (m.type === 'actual') {
+      prevEnd = m.endCash;
+    } else {
+      const ct = b.coachTrainingByMonth[m.month] ?? b.coachTrainingBaseline;
+      const rev = b.revenue - b.coachTrainingBaseline + ct;
+      m.revenue = rev;
+      m.expenses = b.expenses;
+      m.endCash = (prevEnd ?? 0) + (rev - b.expenses);
+      prevEnd = m.endCash;
+    }
+  });
+}
+function computeScenario() {
+  const b = state.baseline; const s = state.scenario;
+  scenarioEndCash = new Array(12).fill(null);
+  let prevEnd = null; let projectedIdx = 0;
+  state.monthly.forEach((m, i) => {
+    if (m.type === 'actual') {
+      prevEnd = m.endCash;
+      scenarioEndCash[i] = m.endCash;
+    } else {
+      const ct = b.coachTrainingByMonth[m.month] ?? b.coachTrainingBaseline;
+      let rev = b.revenue - b.coachTrainingBaseline + ct;
+      let exp = b.expenses;
+      rev = rev * (1 + s.revAdjPct / 100);
+      exp = exp * (1 + s.expAdjPct / 100);
+      if (s.revGrowthPct) rev = rev * Math.pow(1 + s.revGrowthPct / 100, projectedIdx);
+      s.oneTime.forEach(item => {
+        if (item.month === m.month) {
+          if (item.type === 'revenue') rev += Number(item.amount) || 0;
+          else exp += Number(item.amount) || 0;
+        }
+      });
+      scenarioEndCash[i] = (prevEnd ?? 0) + (rev - exp);
+      prevEnd = scenarioEndCash[i];
+      projectedIdx++;
+    }
+  });
+}
+
+function render() {
+  computeBaseline(); computeScenario();
+  renderCards(); renderTable(); renderBaselineInputs(); renderScenarioInputs(); renderOneTimeList(); renderChart();
+}
+
+function renderCards() {
+  let lastActual = null, ytdNet = 0, actualCount = 0;
+  state.monthly.forEach(m => {
+    if (m.type === 'actual') { lastActual = m; ytdNet += (m.revenue - m.expenses); actualCount++; }
+  });
+  document.getElementById('current-cash').textContent = lastActual ? fmt(lastActual.endCash) : '$—';
+  document.getElementById('current-cash-as-of').textContent = lastActual ? 'End of ' + lastActual.month : '';
+  document.getElementById('ytd-net').textContent = fmt(ytdNet);
+  document.getElementById('ytd-months').textContent = actualCount + ' month' + (actualCount === 1 ? '' : 's') + ' of actuals';
+  const dec = state.monthly[11];
+  document.getElementById('year-end').textContent = fmt(dec.endCash);
+  document.getElementById('year-end-scenario').textContent = fmt(scenarioEndCash[11]);
+  const delta = (scenarioEndCash[11] ?? 0) - (dec.endCash ?? 0);
+  document.getElementById('scenario-delta').textContent = 'vs baseline: ' + fmtDelta(delta);
+}
+
+function renderTable() {
+  const body = document.getElementById('monthly-body');
+  body.innerHTML = '';
+  let currentIdx = -1;
+  state.monthly.forEach((m, i) => { if (m.type === 'actual') currentIdx = i; });
+  const showScenario = state.scenario.showScenario;
+  document.querySelectorAll('.scenario-col').forEach(el => el.style.display = showScenario ? '' : 'none');
+
+  state.monthly.forEach((m, i) => {
+    const tr = document.createElement('tr');
+    tr.className = m.type === 'actual' ? 'actual' : 'projected';
+    if (i === currentIdx) tr.classList.add('current');
+    const net = (m.revenue || 0) - (m.expenses || 0);
+    const netClass = net >= 0 ? 'net-pos' : 'net-neg';
+    const scenarioCell = showScenario
+      ? `<td class="scenario-cash scenario-col">${m.type === 'actual' ? fmt(m.endCash) : fmt(scenarioEndCash[i])}</td>`
+      : '<td class="scenario-col" style="display:none;"></td>';
+    tr.innerHTML = `
+      <td><strong>${m.month}</strong></td>
+      <td><select onchange="updateType(${i}, this.value)">
+        <option value="actual" ${m.type==='actual'?'selected':''}>Actual</option>
+        <option value="projected" ${m.type==='projected'?'selected':''}>Projected</option>
+      </select></td>
+      <td>${m.type === 'actual'
+          ? `<input type="number" step="1" value="${Math.round(m.revenue ?? 0)}" onchange="updateField(${i}, 'revenue', this.value)">`
+          : fmt(m.revenue)}</td>
+      <td>${m.type === 'actual'
+          ? `<input type="number" step="1" value="${Math.round(m.expenses ?? 0)}" onchange="updateField(${i}, 'expenses', this.value)">`
+          : fmt(m.expenses)}</td>
+      <td class="${netClass}">${fmt(net)}</td>
+      <td class="end-cash">${m.type === 'actual'
+          ? `<input type="number" step="1" value="${Math.round(m.endCash ?? 0)}" onchange="updateField(${i}, 'endCash', this.value)">`
+          : fmt(m.endCash)}</td>
+      ${scenarioCell}
+    `;
+    body.appendChild(tr);
+  });
+}
+function updateType(idx, newType) {
+  const m = state.monthly[idx]; m.type = newType;
+  if (newType === 'actual' && m.revenue === null) computeBaseline();
+  saveState(); render();
+}
+function updateField(idx, field, value) {
+  const num = parseFloat(value);
+  if (isNaN(num)) return;
+  state.monthly[idx][field] = num;
+  saveState(); render();
+}
+
+function renderBaselineInputs() {
+  const b = state.baseline;
+  document.getElementById('base-rev').value = b.revenue;
+  document.getElementById('base-exp').value = b.expenses;
+  document.getElementById('ct-baseline').value = b.coachTrainingBaseline;
+  document.getElementById('ct-aug').value = b.coachTrainingByMonth.Aug;
+  document.getElementById('ct-sep').value = b.coachTrainingByMonth.Sep;
+  document.getElementById('ct-oct').value = b.coachTrainingByMonth.Oct;
+  document.getElementById('ct-nov').value = b.coachTrainingByMonth.Nov;
+  document.getElementById('ct-dec').value = b.coachTrainingByMonth.Dec;
+}
+function renderScenarioInputs() {
+  const s = state.scenario;
+  document.getElementById('rev-adj').value = s.revAdjPct;
+  document.getElementById('exp-adj').value = s.expAdjPct;
+  document.getElementById('rev-growth').value = s.revGrowthPct;
+  document.getElementById('scenario-on').checked = s.showScenario;
+  updateSliderLabel('rev-adj', s.revAdjPct, '%');
+  updateSliderLabel('exp-adj', s.expAdjPct, '%');
+  updateSliderLabel('rev-growth', s.revGrowthPct, '%/mo');
+}
+function updateSliderLabel(id, val, suffix) {
+  const el = document.getElementById(id + '-val');
+  const sign = val > 0 ? '+' : '';
+  el.textContent = sign + val + suffix;
+  el.className = 'value ' + (val > 0 ? 'pos' : val < 0 ? 'neg' : '');
+}
+
+function renderOneTimeList() {
+  const list = document.getElementById('onetime-list');
+  const projected = state.monthly.filter(m => m.type === 'projected').map(m => m.month);
+  list.innerHTML = '';
+  state.scenario.oneTime.forEach((item, i) => {
+    const row = document.createElement('div');
+    row.className = 'onetime-row';
+    row.innerHTML = `
+      <label style="font-size:12px; color: var(--text-muted); font-weight: 500;">Item ${i+1}</label>
+      <select onchange="updateOneTime(${i}, 'month', this.value)">
+        ${projected.map(mo => `<option value="${mo}" ${item.month===mo?'selected':''}>${mo}</option>`).join('')}
+      </select>
+      <select onchange="updateOneTime(${i}, 'type', this.value)">
+        <option value="revenue" ${item.type==='revenue'?'selected':''}>Revenue (+)</option>
+        <option value="expense" ${item.type==='expense'?'selected':''}>Expense (−)</option>
+      </select>
+      <button class="btn-small danger" onclick="removeOneTime(${i})">×</button>
+    `;
+    const amt = document.createElement('div');
+    amt.className = 'onetime-row';
+    amt.innerHTML = `
+      <label style="font-size:12px; color: var(--text-muted); font-weight: 500;">Amount ($)</label>
+      <input type="number" step="1" value="${item.amount}" onchange="updateOneTime(${i}, 'amount', this.value)" style="grid-column: span 2;">
+      <span></span>
+    `;
+    list.appendChild(row);
+    list.appendChild(amt);
+  });
+  if (state.scenario.oneTime.length === 0) {
+    list.innerHTML = '<div style="font-size:12px; color: var(--text-muted); margin: 4px 0 10px; font-style: italic;">No one-time items yet. Click below to add.</div>';
+  }
+}
+function addOneTime() {
+  const firstProjected = state.monthly.find(m => m.type === 'projected');
+  if (!firstProjected) { alert('No projected months to add one-time items to.'); return; }
+  state.scenario.oneTime.push({ month: firstProjected.month, type: 'revenue', amount: 5000 });
+  saveState(); render();
+}
+function updateOneTime(i, field, value) {
+  if (field === 'amount') value = parseFloat(value) || 0;
+  state.scenario.oneTime[i][field] = value;
+  saveState(); render();
+}
+function removeOneTime(i) {
+  state.scenario.oneTime.splice(i, 1);
+  saveState(); render();
+}
+
+function wireInputs() {
+  const baselineMap = {
+    'base-rev': v => state.baseline.revenue = v,
+    'base-exp': v => state.baseline.expenses = v,
+    'ct-baseline': v => state.baseline.coachTrainingBaseline = v,
+    'ct-aug': v => state.baseline.coachTrainingByMonth.Aug = v,
+    'ct-sep': v => state.baseline.coachTrainingByMonth.Sep = v,
+    'ct-oct': v => state.baseline.coachTrainingByMonth.Oct = v,
+    'ct-nov': v => state.baseline.coachTrainingByMonth.Nov = v,
+    'ct-dec': v => state.baseline.coachTrainingByMonth.Dec = v,
+  };
+  Object.entries(baselineMap).forEach(([id, setter]) => {
+    document.getElementById(id).addEventListener('change', (e) => {
+      const v = parseFloat(e.target.value);
+      if (!isNaN(v)) { setter(v); saveState(); render(); }
+    });
+  });
+  const scMap = {
+    'rev-adj': v => state.scenario.revAdjPct = v,
+    'exp-adj': v => state.scenario.expAdjPct = v,
+    'rev-growth': v => state.scenario.revGrowthPct = v,
+  };
+  Object.entries(scMap).forEach(([id, setter]) => {
+    document.getElementById(id).addEventListener('input', (e) => {
+      const v = parseFloat(e.target.value);
+      if (!isNaN(v)) {
+        setter(v);
+        const suffix = id === 'rev-growth' ? '%/mo' : '%';
+        updateSliderLabel(id, v, suffix);
+        saveState(); render();
+      }
+    });
+  });
+  document.getElementById('scenario-on').addEventListener('change', (e) => {
+    state.scenario.showScenario = e.target.checked;
+    saveState(); render();
+  });
+}
+
+function renderChart() {
+  const ctx = document.getElementById('chart').getContext('2d');
+  const labels = state.monthly.map(m => m.month);
+  const baselineData = state.monthly.map(m => m.endCash);
+  const scenarioData = state.scenario.showScenario ? scenarioEndCash.slice() : null;
+  const colors = state.monthly.map(m => m.type === 'actual' ? '#3C4258' : '#F7EBD1');
+  const borders = state.monthly.map(m => m.type === 'actual' ? '#3C4258' : '#E4B859');
+
+  const datasets = [{
+    type: 'bar', label: 'End of Month Cash (Baseline)',
+    data: baselineData, backgroundColor: colors, borderColor: borders,
+    borderWidth: 1.5, borderRadius: 4, order: 2
+  }];
+  if (scenarioData) {
+    datasets.push({
+      type: 'line', label: 'Scenario',
+      data: scenarioData,
+      borderColor: '#4D80F3', backgroundColor: '#4D80F3',
+      pointRadius: 5, pointHoverRadius: 7, pointBackgroundColor: '#4D80F3',
+      pointBorderColor: '#FFFFFF', pointBorderWidth: 2,
+      borderWidth: 2.5, tension: 0.2, fill: false, order: 1
+    });
+  }
+
+  if (chart) { chart.destroy(); chart = null; }
+  chart = new Chart(ctx, {
+    data: { labels, datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: true, position: 'top', align: 'end',
+          labels: { font: { family: 'Poppins', size: 12 }, color: '#3C4258', usePointStyle: true, padding: 12 }
+        },
+        tooltip: {
+          backgroundColor: '#3C4258', padding: 10,
+          titleFont: { family: 'Poppins', weight: 600 },
+          bodyFont: { family: 'Poppins' },
+          callbacks: {
+            label: (ctx) => {
+              const m = state.monthly[ctx.dataIndex];
+              const tag = m.type === 'actual' ? 'Actual' : 'Projected';
+              return `${ctx.dataset.label}: ${fmt(ctx.parsed.y)} (${tag})`;
+            }
+          }
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            callback: (v) => '$' + (v/1000).toFixed(0) + 'K',
+            font: { family: 'Poppins', size: 11 }, color: '#7B8199'
+          },
+          grid: { color: '#E4E5EA' }
+        },
+        x: {
+          ticks: { font: { family: 'Poppins', size: 11 }, color: '#3C4258' },
+          grid: { display: false }
+        }
+      }
+    }
+  });
+}
+
+wireInputs();
+render();
+</script>
+
+</body>
+</html>
